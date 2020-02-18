@@ -121,21 +121,21 @@ for i in range(1, 3):
     
 
     while not done:
+        agent1, agent2, mrx_last_seen, seen = env.decode(state)
+
+        env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
+        #env.mrx_real_pos = (env.mrx_real_pos + 1) % 25
+        #env.last_seen = (env.last_seen +1) %3
+        state = env.encode(agent1, agent2, env.mrx_real_pos, env.last_seen)
         # --------
         clear_output(wait=True)
         env.render()
-        agent1, agent2, mrx_last_seen, seen = env.decode(state)
-        print(agent1, agent2, mrx_last_seen)
-        print("tu:", env.mrx_real_pos)
+        
+        print("a1:", agent1, "- a2:", agent2, "- x last seen:", env.last_seen)
+        print("x real position: ", env.mrx_real_pos)
         # --------
 
-        #env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
-        env.mrx_real_pos += 1
-        env.last_seen = (env.last_seen +1) %3
-        state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
-
-        print("mrx: ", env.mrx_real_pos)
-
+        
         if random.uniform(0, 1) < epsilon:
             action = env.action_space.sample() # Explore action space
         else:
