@@ -12,7 +12,6 @@ import matplotlib as plt
 import matplotlib.style
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import sys 
 import time
 from IPython.display import clear_output
@@ -90,7 +89,8 @@ def printProgressBar (iteration, total, timer, prefix = '', suffix = '', decimal
     if (iteration % 10) == 0:
         mins, secs = timer.get_time()
         e_mins, e_secs = timer.get_estimated_time(iteration, total)
-        print('\r%s |%s| %s%% %s\tElapsed: %dm %ds\tEstimated: %dm %ds\t' % (prefix, bar, percent, suffix, mins, secs, e_mins, e_secs), end = printEnd)
+        clear_output(wait=False)
+        print('\r%s |%s| %s%% %s\tElapsed: %dm %ds\tEstimated: %dm %ds' % (prefix, bar, percent, suffix, mins, secs, e_mins, e_secs), end = printEnd)
     else:
         print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
     # Print New Line on Complete
@@ -120,13 +120,14 @@ gamma = 0.6
 epsilon = 0.1
 
 
-num_episodes = 100000
+num_episodes = 10000
 max_moves_in_episode = 20
 
 # For plotting metrics
 all_epochs = np.zeros(num_episodes)
 all_penalties = np.zeros(num_episodes)
 all_rewards = np.zeros(num_episodes)
+all_learned_actions = np.zeros(num_episodes)
 
 
 
@@ -143,37 +144,57 @@ for i in range(1, num_episodes):
     env.mrx_seen_pos = env.mrx_real_pos
     env.last_seen = 0
 
-    epochs, penalties, reward, = 0, 0, 0
+    epochs, penalties, reward, learned_action = 0, 0, 0, 0
     done = False
 
     
 
     while not done:
-        
+
+        ## Get valid moves - equivalent to: ##
+        # for x in env.P[state]:
+        #     if x.value[0][2] > -100:
+        #         valid_moves.append(x.key)
+        valid_moves = [key for key, value in env.P[state].items() if value[0][2] > -100]
+
+        # x[0][2] for x in env.P[state].values()
+
         # choose next action
         if random.uniform(0, 1) < epsilon:
-            action = env.action_space.sample() # Explore action space
+            # action = env.action_space.sample() # Explore action space
+            
+            # choose only from valid actions:
+            action = random.choice(valid_moves)
+
         else:
-            action = np.argmax(q_table[state]) # Exploit learned values
+            if np.sum(q_table[state]) > 0:
+                action = np.argmax(q_table[state]) # Exploit learned values
+
+                learned_action += 1
+            else:
+                # at the start choose only from valid moves
+                action = random.choice(valid_moves)
+            
 
         # find next state according to action
         next_state, reward, done, info = env.step(action) 
 
         agent1, agent2, mrx_last_seen, seen = env.decode(next_state)
 
+        # if win
+        if env.mrx_real_pos == agent1 or env.mrx_real_pos == agent2:
+            reward = 20
+            done = True
 
-        ### change next state according to mrXs move
-        env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = minimax.get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
-        next_state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
-        ###
+        else:
+            ### change next state according to mrXs move
+            env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = minimax.get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
+            next_state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
+            ###
 
 
-        if epochs == max_moves_in_episode:
-            reward = -10
-
-        if reward == 20:
-            reward += (max_moves_in_episode - epochs) * 2
-
+            if epochs == max_moves_in_episode:
+                reward = -10
 
 
         # TD update
@@ -192,6 +213,7 @@ for i in range(1, num_episodes):
         all_epochs[i] = epochs
         all_penalties[i] = penalties
         all_rewards[i] += reward
+        all_learned_actions[i] = learned_action
 
         if epochs == max_moves_in_episode:
             break
@@ -200,16 +222,10 @@ for i in range(1, num_episodes):
         agent1, agent2, mrx_last_seen, seen = env.decode(next_state)
         # --------
 
-        # if done
-        if agent1 == env.mrx_real_pos or agent2 == env.mrx_real_pos or reward >= 20:
-            done = True
-        else:
-            done = False
-
-            #### Choose next move for mrX and change
-            # env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
-            # next_state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
-            ####
+        #### Choose next move for mrX and change
+        # env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
+        # next_state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
+        ####
 
 
         state = next_state
@@ -333,7 +349,7 @@ while not done:
 
 
 # Plot statistics
-fig, axs = plt.subplots(3, 1, constrained_layout=True)
+fig, axs = plt.subplots(4, 1, constrained_layout=True)
 axs[0].plot(all_epochs)
 axs[0].set_title('Length of games')
 
@@ -342,5 +358,8 @@ axs[1].set_title('Penalties')
 
 axs[2].plot(all_rewards)
 axs[2].set_title('Rewards')
+
+axs[3].plot(all_learned_actions)
+axs[3].set_title('Choose learned actions')
 
 plt.show()
