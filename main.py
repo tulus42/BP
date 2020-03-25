@@ -8,12 +8,109 @@
 
 import gym
 import random
+import matplotlib as plt
+import matplotlib.style
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import sys 
+import time
 from IPython.display import clear_output
+import pickle
 
+from collections import defaultdict 
+
+import minimax
+
+
+matplotlib.style.use('ggplot') 
+
+
+class Timer():
+    def __init__(self):
+        self.init_time = time.time()
+        self.actual_time = time.time()
+        self.end_time = time.time()
+
+    def get_time(self):
+        self.actual_time = time.time()
+        exec_time = self.actual_time - self.init_time
+
+        return self.parse(exec_time)
+
+    def get_estimated_time(self, i, max_i):
+        self.actual_time = time.time()
+
+        elapsed_time = self.actual_time - self.init_time
+        
+        if i == 0:
+            return 0, 0
+        else:
+            estimated_time = (elapsed_time / i) * (max_i - i)
+
+        return self.parse(estimated_time)
+
+    def parse(self, time):
+        mins = 0
+        secs = 0
+        if time > 60:
+            mins = time / 60
+            
+        secs = time % 60
+
+        mins = round(mins)
+        secs = round(secs)
+
+        return mins, secs
+
+
+    def show(self):
+        m, s = self.get_time()
+        print("Execution time:", m, "mins", s, "s")
+
+
+# Print iterations progress
+def printProgressBar (iteration, total, timer, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+
+    if (iteration % 10) == 0:
+        mins, secs = timer.get_time()
+        e_mins, e_secs = timer.get_estimated_time(iteration, total)
+        print('\r%s |%s| %s%% %s\tElapsed: %dm %ds\tEstimated: %dm %ds\t' % (prefix, bar, percent, suffix, mins, secs, e_mins, e_secs), end = printEnd)
+    else:
+        print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = printEnd)
+    # Print New Line on Complete
+    if iteration == total: 
+        print()
+
+#
+#
+
+
+
+##############
+# For showing progress
+timer = Timer()
+
+# environment
 env = gym.make("ScotlandYardMini-v0").env
 
-env.render()
+# with open('q_table', 'rb') as input:
+#     q_table = pickle.load(input)
 
 q_table = np.zeros([env.observation_space.n, env.action_space.n])
 
@@ -22,98 +119,29 @@ alpha = 0.1
 gamma = 0.6
 epsilon = 0.1
 
+
+num_episodes = 100000
+max_moves_in_episode = 20
+
 # For plotting metrics
-all_epochs = []
-all_penalties = []
+all_epochs = np.zeros(num_episodes)
+all_penalties = np.zeros(num_episodes)
+all_rewards = np.zeros(num_episodes)
 
 
-#
-#
-def get_next_move(agent1, agent2, real_pos, seen_pos, seen_time):
 
-    a1 = [agent1 % 5, agent1 // 5]
-    a2 = [agent2 % 5, agent2 // 5]
-    mrx = [real_pos % 5, real_pos // 5]
+# Initial call to print 0% progress
+printProgressBar(0, num_episodes, timer, prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+
+
+for i in range(1, num_episodes):
     
-    possible_positions = [minimax_step(a1, a2, [mrx[0], mrx[1]+1], 0, False, 3), # UP
-        minimax_step(a1, a2, [mrx[0], mrx[1]-1],  0, False, 3),                  # DOWN
-        minimax_step(a1, a2, [mrx[0]+1, mrx[1]], 0, False, 3),                   # LEFT
-        minimax_step(a1, a2, [mrx[0]-1, mrx[1]], 0, False, 3)]                   # RIGHT
-
-    next_move = possible_positions.index(max(possible_positions))
-    next_pos = real_pos + decode_move(next_move)
-
-    seen_time = (seen_time + 1) % 3
-
-    # every 3th move is mrX visible
-    if seen_time == 0:
-        seen_pos = next_pos
-
-    return next_pos, seen_pos, seen_time
-
-
-#
-#
-def minimax_step(a1, a2, mrx, depth, is_mrx, h):
-    if out_of_range(a1) or out_of_range(a2) or out_of_range(mrx):
-        return 100 if is_mrx else -100
-
-    if a1 == mrx or a2 == mrx:
-        return -100
-
-    if depth == h:
-        return max(get_distance(a1, mrx), get_distance(a2, mrx)) if is_mrx else min(get_distance(a1, mrx), get_distance(a2, mrx))
-
-    if is_mrx:
-        return max(minimax_step(a1, a2, [mrx[0]+1, mrx[1]], depth + 1, False, h),
-                   minimax_step(a1, a2, [mrx[0]-1, mrx[1]], depth + 1, False, h),
-                   minimax_step(a1, a2, [mrx[0], mrx[1]+1], depth + 1, False, h),
-                   minimax_step(a1, a2, [mrx[0], mrx[1]-1], depth + 1, False, h))
-    else:
-        return min(minimax_step([a1[0]+1, a1[1]], a2, mrx, depth + 1, True, h),
-                   minimax_step([a1[0]-1, a1[1]], a2, mrx, depth + 1, True, h),
-                   minimax_step([a1[0], a1[1]+1], a2, mrx, depth + 1, True, h),
-                   minimax_step([a1[0], a1[1]-1], a2, mrx, depth + 1, True, h),
-                   minimax_step(a1, [a2[0]+1, a2[1]], mrx, depth + 1, True, h),
-                   minimax_step(a1, [a2[0]-1, a2[1]], mrx, depth + 1, True, h),
-                   minimax_step(a1, [a2[0], a2[1]+1], mrx, depth + 1, True, h),
-                   minimax_step(a1, [a2[0], a2[1]-1], mrx, depth + 1, True, h))
-
-
-#
-#
-def out_of_range(x):
-    if x[0] < 0 or x[0] > 4 or x[1] < 0 or x[1] > 4:
-        return True
-    else:
-        return False
-
-
-#
-#
-def get_distance(a, mrx):
-    x = abs(a[0] - mrx[0])
-    y = abs(a[1] - mrx[1])
-    return x + y
-
-
-def decode_move(move):
-    if move == 0:
-        return 5
-    elif move == 1:
-        return -5
-    elif move == 2:
-        return 1
-    else:
-        return -1
-
-
-##############
-for i in range(1, 3):
-    env.mrx_seen_pos = env.mrx_real_pos
-    env.last_seen = 0
 
     state = env.reset()
+
+    env.mrx_seen_pos = env.mrx_real_pos
+    env.last_seen = 0
 
     epochs, penalties, reward, = 0, 0, 0
     done = False
@@ -121,82 +149,198 @@ for i in range(1, 3):
     
 
     while not done:
-        agent1, agent2, mrx_last_seen, seen = env.decode(state)
-
-        env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
-        #env.mrx_real_pos = (env.mrx_real_pos + 1) % 25
-        #env.last_seen = (env.last_seen +1) %3
-        state = env.encode(agent1, agent2, env.mrx_real_pos, env.last_seen)
-        # --------
-        clear_output(wait=True)
-        env.render()
         
-        print("a1:", agent1, "- a2:", agent2, "- x last seen:", env.last_seen)
-        print("x real position: ", env.mrx_real_pos)
-        # --------
-
-        
+        # choose next action
         if random.uniform(0, 1) < epsilon:
             action = env.action_space.sample() # Explore action space
         else:
             action = np.argmax(q_table[state]) # Exploit learned values
 
+        # find next state according to action
         next_state, reward, done, info = env.step(action) 
-        
+
+        agent1, agent2, mrx_last_seen, seen = env.decode(next_state)
+
+
+        ### change next state according to mrXs move
+        env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = minimax.get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
+        next_state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
+        ###
+
+
+        if epochs == max_moves_in_episode:
+            reward = -10
+
+        if reward == 20:
+            reward += (max_moves_in_episode - epochs) * 2
+
+
+
+        # TD update
         old_value = q_table[state, action]
         next_max = np.max(q_table[next_state])
         
         new_value = (1 - alpha) * old_value + alpha * (reward + gamma * next_max)
         q_table[state, action] = new_value
 
-        if reward == -10:
+
+
+        if reward == -100:
             penalties += 1
+
+        # Statistics
+        all_epochs[i] = epochs
+        all_penalties[i] = penalties
+        all_rewards[i] += reward
+
+        if epochs == max_moves_in_episode:
+            break
 
         # --------
         agent1, agent2, mrx_last_seen, seen = env.decode(next_state)
         # --------
 
-        state = next_state
+        # if done
+        if agent1 == env.mrx_real_pos or agent2 == env.mrx_real_pos or reward >= 20:
+            done = True
+        else:
+            done = False
 
-        # --------
-        print("next: ", env.decode(next_state))
-        # --------
+            #### Choose next move for mrX and change
+            # env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
+            # next_state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
+            ####
+
+
+        state = next_state
 
         epochs += 1
 
+
+    # Update Progress Bar
+    printProgressBar(i + 1, num_episodes, timer, prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+
+    # 
+    # percent.show(i, num_episodes, timer)
     # --------
+
+
+print("Training finished.")
+timer.show()
+
+
+with open('q_table.pkl', 'wb') as output:
+    pickle.dump(q_table, output, pickle.HIGHEST_PROTOCOL)
+
+
+# # EXAMPLE GAME
+# print("------ Example game: ------")
+# state = env.reset()
+# epochs, penalties, reward = 0, 0, 0
+
+# env.render()
+
+# done = False
+
+# while not done:
+#     action = np.argmax(q_table[state])
+#     state, reward, done, info = env.step(action)
+
+#     agent1, agent2, mrx_last_seen, seen = env.decode(next_state)
+
+
+#     ### change next state according to mrXs move
+#     env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = minimax.get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
+#     state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
+#     ###
+
+#     env.render()
+
+#     if reward == 20:
+#         done = True
+
+
+env.render()
+
+while not done:
+        
+    # choose next action
+    if random.uniform(0, 1) < epsilon:
+        action = env.action_space.sample() # Explore action space
+    else:
+        action = np.argmax(q_table[state]) # Exploit learned values
+
+    # find next state according to action
+    next_state, reward, done, info = env.step(action) 
+
+    agent1, agent2, mrx_last_seen, seen = env.decode(next_state)
+
+
+    ### change next state according to mrXs move
+    env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = minimax.get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
+    next_state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
+    ###
+
+
+    if epochs == max_moves_in_episode:
+        reward = -20
+
+
+
+    # TD update
+    old_value = q_table[state, action]
+    next_max = np.max(q_table[next_state])
+    
+    new_value = (1 - alpha) * old_value + alpha * (reward + gamma * next_max)
+    q_table[state, action] = new_value
+
+
+
+    if reward == -10:
+        penalties += 1
+
+    # Statistics
+    all_epochs[i] = epochs
+    all_penalties[i] = penalties
+    all_rewards[i] += reward
+
+    if epochs == max_moves_in_episode:
+        break
+
+    # --------
+    agent1, agent2, mrx_last_seen, seen = env.decode(next_state)
+    # --------
+
+    # if done
+    if agent1 == env.mrx_real_pos or agent2 == env.mrx_real_pos or reward >= 20:
+        done = True
+    else:
+        done = False
+
+        #### Choose next move for mrX and change
+        # env.mrx_real_pos, env.mrx_seen_pos, env.last_seen = get_next_move(agent1, agent2, env.mrx_real_pos, env.mrx_seen_pos, env.last_seen)
+        # next_state = env.encode(agent1, agent2, env.mrx_seen_pos, env.last_seen)
+        ####
+
+
+    state = next_state
+
+    epochs += 1
+
     env.render()
-    agent1, agent2, mrx_last_seen, seen = env.decode(state)
-    print(agent1, agent2, mrx_last_seen)
-    print("END of epoch ----------------------------------------------")
-    # --------
-
-print("Training finished.\n")
 
 
 
+# Plot statistics
+fig, axs = plt.subplots(3, 1, constrained_layout=True)
+axs[0].plot(all_epochs)
+axs[0].set_title('Length of games')
 
+axs[1].plot(all_penalties)
+axs[1].set_title('Penalties')
 
+axs[2].plot(all_rewards)
+axs[2].set_title('Rewards')
 
-
-"""int minimax(int depth, int nodeIndex, bool isMax, 
-            int scores[], int h) 
-{ 
-    // Terminating condition. i.e 
-    // leaf node is reached 
-    if (depth == h) 
-        return scores[nodeIndex]; 
-  
-    //  If current move is maximizer, 
-    // find the maximum attainable 
-    // value 
-    if (isMax) 
-       return max(minimax(depth+1, nodeIndex*2, false, scores, h), 
-            minimax(depth+1, nodeIndex*2 + 1, false, scores, h)); 
-  
-    // Else (If current move is Minimizer), find the minimum 
-    // attainable value 
-    else
-        return min(minimax(depth+1, nodeIndex*2, true, scores, h), 
-            minimax(depth+1, nodeIndex*2 + 1, true, scores, h)); 
-} """
+plt.show()
