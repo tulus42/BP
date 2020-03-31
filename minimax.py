@@ -4,7 +4,7 @@ def get_next_move(agent1, agent2, real_pos, seen_pos, seen_time):
     a2 = [agent2 % 5, agent2 // 5]
     mrx = [real_pos % 5, real_pos // 5]
     
-    possible_positions = [minimax_step(a1, a2, [mrx[0], mrx[1]-1], 0, False, 3), # UP
+    possible_positions = [minimax_step(a1, a2, [mrx[0], mrx[1]-1], 0, False, 3),     # UP
             minimax_step(a1, a2, [mrx[0], mrx[1]+1],  0, False, 3),                  # DOWN
             minimax_step(a1, a2, [mrx[0]-1, mrx[1]], 0, False, 3),                   # LEFT
             minimax_step(a1, a2, [mrx[0]+1, mrx[1]], 0, False, 3)]                   # RIGHT
