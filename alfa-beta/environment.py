@@ -113,7 +113,7 @@ def get_valid_moves_agents(position1, position2):
 
     for i1 in agent1:
         for i2 in agent2:
-            if i1 == False or i2 == False:
+            if i1 == False or i2 == False or i1 == i2:
                 possible_positions.append(False)
             else:
                 possible_positions.append([i1, i2])
