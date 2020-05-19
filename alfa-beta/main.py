@@ -10,8 +10,10 @@ ab = alfa_beta.AlfaBeta()
 
 #     env.epochs += 1
 
-env.move_agents(ab)
-env.render()
 
-env.move_agents(ab)
-env.render()
+for x in range(10):
+    env.render()
+    env.move_agents(ab)
+
+    env.render()
+    env.move_mrx(ab)

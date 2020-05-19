@@ -31,12 +31,46 @@ class Environment:
         self.alfabeta_moves = 0
         
     def move_agents(self, alfabeta):
+        print("----------------------")
+        print(self.alfabeta_moves)
+        print("----------------------")
+        
         if self.alfabeta_moves % 3 == 0:
             alfabeta.explore_state_space(self.agent1, self.agent2, self.mrx)
         
-        self.agent1, self.agent2 = alfabeta.choose_new_move()
-
+        self.agent1, self.agent2 = alfabeta.choose_new_move_agents()
+    
         self.alfabeta_moves = (self.alfabeta_moves + 1) % 3
+
+        # make imaginary step for mrX - agents do not know real position
+        if self.alfabeta_moves % 3 != 0:
+            alfabeta.choose_new_move_mrx()
+
+    def move_mrx(self, alfabeta):
+        result = False
+        while not result:
+            result = self.handle_input_mov()
+
+    def handle_input_mov(self):
+        print("Choose new Mr.X position")
+        move = input()
+        if move == "1":
+            new_pos = go_up(self.mrx)
+        elif move == "2":
+            new_pos = go_right(self.mrx)
+        elif move == "3":
+            new_pos = go_down(self.mrx)
+        elif move == "4":
+            new_pos = go_left(self.mrx)
+        else:
+            return False
+
+        if new_pos == False:
+            return False
+        else:
+            self.mrx = new_pos
+            return True
+
 
     # check if game finished
     def finished(self):
@@ -104,6 +138,15 @@ def get_valid_moves(position):
     right = go_right(position)
 
     return [up, down, left, right]
+
+def get_valid_moves_mrx(mrx, a1, a2):
+    valid_in_env = get_valid_moves(mrx)
+
+    for i in range(len(valid_in_env)):
+        if valid_in_env[i] == a1 or valid_in_env[i] == a2:
+            valid_in_env[i] = False
+
+    return valid_in_env
 
 def get_valid_moves_agents(position1, position2):
     agent1 = get_valid_moves(position1)

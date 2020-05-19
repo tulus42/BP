@@ -27,13 +27,13 @@ class Node:
 class AlfaBeta:
     def __init__(self):
         self.root = Node()
-
-        self.evaluate = [0 for x in range(1000)]
+        self.evaluate = [0 for x in range(10000)]
 
     def choose_new_move_agents(self):
         children_alfa_values = []
         for child in self.root.children:
             children_alfa_values.append(child.beta)
+
         # get index of best branch
         new_move_index = children_alfa_values.index(self.root.alfa)
         # get new node
@@ -42,9 +42,26 @@ class AlfaBeta:
         self.root = new_move_node
     
         ## SHOW NEW POSITIONS OF AGENTS ##
-        print([self.root.a1, self.root.a2])
+        print("Agents:", [self.root.a1, self.root.a2])
 
         return self.root.a1, self.root.a2
+
+    def choose_new_move_mrx(self):
+        children_beta_values = []
+        for child in self.root.children:
+            children_beta_values.append(child.alfa)
+
+        # get index of best branch
+        new_move_index = children_beta_values.index(self.root.beta)
+        # get new node
+        new_move_node = self.root.children[new_move_index]
+
+        self.root = new_move_node
+
+        ## SHOW NEW POSITIONS OF AGENTS ##
+        print("MrX:", self.root.mrx)
+
+        return self.root.mrx
 
 
     def explore_state_space(self, a1, a2, mrx):
@@ -67,12 +84,18 @@ class AlfaBeta:
 
                 self.root.alfa = max(returned_values)
 
-    def make_alfabeta_step(self, node):
-        
-        
 
-        if node.depth == 1 and node.turn == "B":
-            return self.evaluate_state(node)
+    def make_alfabeta_step(self, node):
+        # if node.depth == 0 and node.turn == "B":
+        #     print("-----------------------------------")
+        # print("SEND")
+        # print("[{}, {}], depth={}, turn={}".format(node.a1, node.a2, node.depth, node.turn))
+        # print("a =", node.alfa, "b =", node.beta)
+        # print("")
+
+        if node.depth == 2 and node.turn == "B":
+            node.beta = self.evaluate_state(node)
+            return node.beta
 
         if node.turn == "A":
             return self.player_A(node)
@@ -92,24 +115,23 @@ class AlfaBeta:
                     node_result = self.make_alfabeta_step(node.children[-1])
                     returned_values.append(node_result)
         
-                    # check if still A > B
-                    if max(returned_values) < node.beta:
-                        if max(returned_values) > node.alfa:
-                            node.alfa = max(returned_values)
-                    else:
-                        break
+                    if max(returned_values) > node.alfa:
+                        node.alfa = max(returned_values)
+                    
             else:
                 break
             
-        print("[{}, {}], depth={}, turn={}".format(node.a1, node.a2, node.depth, node.turn))
-        print("a =", node.alfa, "b =", node.beta)
-        print("A", node.alfa)
+        # print("RETURN")
+        # print("[{}, {}], depth={}, turn={}".format(node.a1, node.a2, node.depth, node.turn))
+        # print("a =", node.alfa, "b =", node.beta)
+        # print("A", node.alfa)
+        # print("")
         
         return node.alfa
 
     def player_B(self, node):
         
-        valid_moves = env.get_valid_moves(node.mrx)
+        valid_moves = env.get_valid_moves_mrx(node.mrx, node.a1, node.a2)
         returned_values = []
 
         for move in valid_moves:
@@ -119,20 +141,17 @@ class AlfaBeta:
                     node_result = self.make_alfabeta_step(node.children[-1])
                     returned_values.append(node_result)
 
-                    # check if still A > B
-                    if min(returned_values) > node.alfa:
-                        if min(returned_values) < node.beta:
-                            node.beta = min(returned_values)
-                    else: 
-                        break
+                    if min(returned_values) < node.beta:
+                        node.beta = min(returned_values)
+
             else:
                 break
 
-            
-        print("[{}, {}], depth={}, turn={}".format(node.a1, node.a2, node.depth, node.turn))
-        print("a =", node.alfa, "b =", node.beta)
-        print("B", node.beta)
-        print("")
+        # print("RETURN")            
+        # print("[{}, {}], depth={}, turn={}".format(node.a1, node.a2, node.depth, node.turn))
+        # print("a =", node.alfa, "b =", node.beta)
+        # print("B", node.beta)
+        # print("")
         return node.beta
 
     def evaluate_state(self, node):
