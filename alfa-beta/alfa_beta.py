@@ -93,9 +93,9 @@ class AlfaBeta:
         # print("a =", node.alfa, "b =", node.beta)
         # print("")
 
-        if node.depth == 2 and node.turn == "B":
-            node.beta = self.evaluate_state(node)
-            return node.beta
+        if node.depth == 3 and node.turn == "A":
+            node.alfa = self.evaluate_state(node)
+            return node.alfa
 
         if node.turn == "A":
             return self.player_A(node)
@@ -154,5 +154,33 @@ class AlfaBeta:
         # print("")
         return node.beta
 
-    def evaluate_state(self, node):
-        return self.evaluate.pop(0)
+    def evaluate_state(self, evalated_node):
+        finished = False
+        node = evalated_node
+        value = 0
+        while not finished:
+            if node == self.root:
+                finished = True
+
+            # for every posible chatch during this branch is state
+            if node.mrx == node.a1 or node.mrx == node.a2:
+                value += node.depth * 10
+            else:
+                value -= self.evaluate_distance(node.mrx, node.a1)
+                value -= self.evaluate_distance(node.mrx, node.a2) 
+            
+            node = node.parrent
+
+
+        return value
+
+    def evaluate_distance(self, pos1, pos2):
+        p1x = pos1 % 5
+        p1y = pos1 // 5
+
+        p2x = pos2 % 5
+        p2y = pos2 // 5
+
+        distance = abs(p1x - p2x) + abs(p1y - p2y)
+
+        return distance

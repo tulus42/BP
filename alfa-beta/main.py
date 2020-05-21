@@ -1,6 +1,7 @@
 import environment
 import alfa_beta
 
+
 env = environment.Environment()
 ab = alfa_beta.AlfaBeta()
 
@@ -9,11 +10,17 @@ ab = alfa_beta.AlfaBeta()
 #     env.move_agents(ab)
 
 #     env.epochs += 1
-
+env.render()
 
 for x in range(10):
-    env.render()
     env.move_agents(ab)
 
-    env.render()
+    if env.mrx == env.agent1 or env.mrx == env.agent2:
+        
+        env.render()
+        print("WIN")
+        break
+
+    
     env.move_mrx(ab)
+    env.render()
