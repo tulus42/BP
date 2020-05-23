@@ -144,9 +144,9 @@ def get_valid_moves(position):
 def get_valid_moves_mrx(mrx, a1, a2):
     valid_in_env = get_valid_moves(mrx)
 
-    # for i in range(len(valid_in_env)):
-    #     if valid_in_env[i] == a1 or valid_in_env[i] == a2:
-    #         valid_in_env[i] = False
+    for i in range(len(valid_in_env)):
+        if valid_in_env[i] == a1 or valid_in_env[i] == a2:
+            valid_in_env[i] = False
 
     return valid_in_env
 
@@ -158,9 +158,7 @@ def get_valid_moves_agents(position1, position2):
 
     for i1 in agent1:
         for i2 in agent2:
-            if i1 == False or i2 == False or i1 == i2:
-                possible_positions.append(False)
-            else:
+            if i1 != False and i2 != False and i1 != i2:
                 possible_positions.append([i1, i2])
 
     return possible_positions
