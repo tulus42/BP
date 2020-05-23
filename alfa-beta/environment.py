@@ -1,10 +1,11 @@
 import random
+import sys
 
 class Environment:
     def __init__(self):
-        self.mrx = 0
-        self.agent1 = 0
-        self.agent2 = 0
+        self.mrx = 7
+        self.agent1 = 13
+        self.agent2 = 9
         self.epochs = 0
         self.alfabeta_moves = 0
         
@@ -50,7 +51,7 @@ class Environment:
         # result = False
         # while not result:
         #     result = self.handle_input_mov()
-        alfabeta.choose_new_move_mrx()
+        self.mrx = alfabeta.choose_new_move_mrx()
 
     def handle_input_mov(self):
         print("Choose new Mr.X position")
@@ -143,9 +144,9 @@ def get_valid_moves(position):
 def get_valid_moves_mrx(mrx, a1, a2):
     valid_in_env = get_valid_moves(mrx)
 
-    for i in range(len(valid_in_env)):
-        if valid_in_env[i] == a1 or valid_in_env[i] == a2:
-            valid_in_env[i] = False
+    # for i in range(len(valid_in_env)):
+    #     if valid_in_env[i] == a1 or valid_in_env[i] == a2:
+    #         valid_in_env[i] = False
 
     return valid_in_env
 

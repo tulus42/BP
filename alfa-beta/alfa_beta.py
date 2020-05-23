@@ -11,6 +11,7 @@ class Node:
         self.a1 = a1
         self.a2 = a2
         self.mrx = mrx
+        self.number = 0
 
     def reset_root(self):
         self.parrent = None
@@ -28,6 +29,7 @@ class AlfaBeta:
     def __init__(self):
         self.root = Node()
         self.evaluate = [0 for x in range(10000)]
+        self.number = 0
 
     def choose_new_move_agents(self):
         children_alfa_values = []
@@ -92,15 +94,47 @@ class AlfaBeta:
         # print("[{}, {}], depth={}, turn={}".format(node.a1, node.a2, node.depth, node.turn))
         # print("a =", node.alfa, "b =", node.beta)
         # print("")
+        #########
+        self.number += 1
+        node.number = self.number
+
+        # print("Node:", node.number)
+        # print("parrent:", node.parrent.number)
+        # print("a =", node.alfa, "b =", node.beta)
+        # print("")
+        #########
+
 
         if node.depth == 3 and node.turn == "A":
             node.alfa = self.evaluate_state(node)
+
+            #########
+            # print("Node:", node.number, "RETURNS", node.alfa)
+            # print("parrent:", node.parrent.number)
+            # print("a =", node.alfa, "b =", node.beta)
+            # print("")
+            #########
+
             return node.alfa
 
         if node.turn == "A":
-            return self.player_A(node)
+            res = self.player_A(node)
+            #########
+            # print("Node:", node.number, "RETURNS", res)
+            # print("parrent:", node.parrent.number)
+            # print("a =", node.alfa, "b =", node.beta)
+            # print("")
+            #########
+            return res
         else:
-            return self.player_B(node)
+            res = self.player_B(node)
+            #########
+            # print("Node:", node.number, "RETURNS", res)
+            # print("parrent:", node.parrent.number)
+            # print("a =", node.alfa, "b =", node.beta)
+            # print("")
+            #########
+            return res
 
 
     def player_A(self, node):
@@ -164,7 +198,7 @@ class AlfaBeta:
 
             # for every posible chatch during this branch is state
             if node.mrx == node.a1 or node.mrx == node.a2:
-                value += node.depth * 10
+                value += node.depth * 50
             else:
                 value -= self.evaluate_distance(node.mrx, node.a1)
                 value -= self.evaluate_distance(node.mrx, node.a2) 

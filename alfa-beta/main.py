@@ -18,7 +18,7 @@ for x in range(10):
     if env.mrx == env.agent1 or env.mrx == env.agent2:
         
         env.render()
-        print("WIN")
+        print("WIN", x)
         break
 
     
