@@ -38,7 +38,7 @@ class AlfaBeta:
         self.root = new_move_node
 
         ## SHOW NEW POSITIONS OF AGENTS ##
-        print("Agents:", [self.root.a1, self.root.a2])
+        # print("Agents:", [self.root.a1, self.root.a2])
 
         return self.root.a1, self.root.a2
 
@@ -51,7 +51,7 @@ class AlfaBeta:
         self.root = new_move_node
 
         ## SHOW NEW POSITIONS OF AGENTS ##
-        print("MrX:", self.root.mrx)
+        # print("MrX:", self.root.mrx)
 
         return self.root.mrx
 
@@ -103,10 +103,11 @@ class AlfaBeta:
 
        
     def player_B(self, node):
-        # new_valid_locations = env.get_valid_moves_mrx_vs_player(node.mrx)               # variant for playing with player #
-        new_valid_locations = env.get_valid_moves_mrx(node.mrx, node.a1, node.a2) # use only when play only AI against itself
+        new_valid_locations = env.get_valid_moves_mrx_vs_player(node.mrx)               # variant for playing with player #
+        # new_valid_locations = env.get_valid_moves_mrx(node.mrx, node.a1, node.a2) # use only when play only AI against itself
         
         if new_valid_locations == []:                                       # use only when play only AI against itself
+            print("ERR: empty moves")
             return self.evaluate_state(node)
 
         for new_location in new_valid_locations:

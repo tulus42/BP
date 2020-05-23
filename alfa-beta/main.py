@@ -13,10 +13,8 @@ ab = alfa_beta.AlfaBeta()
 env.render()
 
 for x in range(10):
-    env.move_agents(ab)
 
     if env.mrx == env.agent1 or env.mrx == env.agent2:
-        
         env.render()
         print("WIN", x)
         break
@@ -26,5 +24,8 @@ for x in range(10):
         env.render()
         print("WIN", x)
         break
-    
+
+    env.move_agents(ab)
+
+    print("Ťah:", x)
     env.render()

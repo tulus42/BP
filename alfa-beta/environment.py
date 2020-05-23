@@ -1,5 +1,6 @@
 import random
 import sys
+import player_input
 
 class Environment:
     def __init__(self):
@@ -32,11 +33,12 @@ class Environment:
         self.alfabeta_moves = 0
         
     def move_agents(self, alfabeta):
-        print("----------------------")
-        print(self.alfabeta_moves)
-        print("----------------------")
+        # print("----------------------")
+        # print(self.alfabeta_moves)
+        # print("----------------------")
         
         if self.alfabeta_moves % 3 == 0:
+            print("Teraz ťa vidia")
             alfabeta.explore_state_space(self.agent1, self.agent2, self.mrx)
         
         self.agent1, self.agent2 = alfabeta.choose_new_move_agents()
@@ -44,39 +46,21 @@ class Environment:
         self.alfabeta_moves = (self.alfabeta_moves + 1) % 3
 
         # make imaginary step for mrX - agents do not know real position
+        alfabeta.choose_new_move_mrx()                                          # only in vs player
+
+        # make imaginary step for mrX - agents do not know real position
         # if self.alfabeta_moves % 3 != 0:
         #     alfabeta.choose_new_move_mrx()
 
     def move_mrx(self, alfabeta):
-        # result = False
-        # while not result:
-        #     result = self.handle_input_mov()
-        new_mrx_position = alfabeta.choose_new_move_mrx()
+        # new_mrx_position = alfabeta.choose_new_move_mrx()   # only AI vs itself
+        new_mrx_position = player_input.handle_input(self.mrx, self.agent1, self.agent2)        # AI vs player
 
         if new_mrx_position == -1:
             return True
         self.mrx = new_mrx_position
         return False
 
-    def handle_input_mov(self):
-        print("Choose new Mr.X position")
-        move = input()
-        if move == "1":
-            new_pos = go_up(self.mrx)
-        elif move == "2":
-            new_pos = go_right(self.mrx)
-        elif move == "3":
-            new_pos = go_down(self.mrx)
-        elif move == "4":
-            new_pos = go_left(self.mrx)
-        else:
-            return False
-
-        if new_pos == False:
-            return False
-        else:
-            self.mrx = new_pos
-            return True
 
 
     # check if game finished
