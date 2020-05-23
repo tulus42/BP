@@ -22,5 +22,9 @@ for x in range(10):
         break
 
     
-    env.move_mrx(ab)
+    if env.move_mrx(ab) == True:
+        env.render()
+        print("WIN", x)
+        break
+    
     env.render()
