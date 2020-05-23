@@ -33,14 +33,35 @@ class AlfaBeta:
         self.number = 0
 
     def choose_new_move_agents(self):
-        
+        new_move_node = self.root.best_way
+
+        self.root = new_move_node
+
+        ## SHOW NEW POSITIONS OF AGENTS ##
+        print("Agents:", [self.root.a1, self.root.a2])
+
+        return self.root.a1, self.root.a2
 
     def choose_new_move_mrx(self):
-        
+        new_move_node = self.root.best_way
+
+        if new_move_node == False:
+            return -1
+
+        self.root = new_move_node
+
+        ## SHOW NEW POSITIONS OF AGENTS ##
+        print("MrX:", self.root.mrx)
+
+        return self.root.mrx
 
 
     def explore_state_space(self, a1, a2, mrx):
         self.root.reset()
+
+        self.root.a1 = a1
+        self.root.a2 = a2
+        self.root.mrx = mrx
 
         self.make_alfabeta_step(self.root)
 
@@ -49,9 +70,9 @@ class AlfaBeta:
         if node.depth > 2:
             return self.evaluate_state(node)
         elif node.turn == "A":
-            return self.player_B(node)
-        elif node.turn == "B":
             return self.player_A(node)
+        elif node.turn == "B":
+            return self.player_B(node)
         else:
             raise Exception(SystemError)
         
@@ -72,7 +93,7 @@ class AlfaBeta:
 
                 if node_result > node.alfa:
                     node.alfa = node_result
-                    node.best_way = node.children.index(node.children[-1])
+                    node.best_way = node.children[-1]
 
             else:
                 break
@@ -82,11 +103,28 @@ class AlfaBeta:
 
        
     def player_B(self, node):
-        # new_valid_locations = env.get_valid_moves(node.mrx)               # variant for playing with player
+        # new_valid_locations = env.get_valid_moves_mrx_vs_player(node.mrx)               # variant for playing with player #
         new_valid_locations = env.get_valid_moves_mrx(node.mrx, node.a1, node.a2) # use only when play only AI against itself
         
-        if new_valid_locations == []:
+        if new_valid_locations == []:                                       # use only when play only AI against itself
             return self.evaluate_state(node)
+
+        for new_location in new_valid_locations:
+            if node.alfa < node.beta:
+                new_node = Node(node.a1, node.a2, new_location, parrent=node, alfa=node.alfa, beta=node.beta, depth=node.depth+1, turn="A")
+                node.children.append(new_node)
+
+                node_result = self.make_alfabeta_step(node.children[-1])
+
+                if node_result < node.beta:
+                    node.beta = node_result
+                    node.best_way = node.children[-1]
+
+            else:
+                break
+
+        return node.beta
+
 
     def evaluate_state(self, evaluated_node):
         finished = False
@@ -98,10 +136,10 @@ class AlfaBeta:
 
             # for every posible chatch during this branch is state
             if node.mrx == node.a1 or node.mrx == node.a2:
-                value += node.depth * 50
+                value += (3 - node.depth) * 50
             else:
-                value -= self.evaluate_distance(node.mrx, node.a1)
-                value -= self.evaluate_distance(node.mrx, node.a2) 
+                value -= self.evaluate_distance(node.mrx, node.a1) * node.depth
+                value -= self.evaluate_distance(node.mrx, node.a2) * node.depth
             
             node = node.parrent
 

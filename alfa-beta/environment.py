@@ -3,9 +3,9 @@ import sys
 
 class Environment:
     def __init__(self):
-        self.mrx = 7
-        self.agent1 = 13
-        self.agent2 = 9
+        self.mrx = 1
+        self.agent1 = 3
+        self.agent2 = 7
         self.epochs = 0
         self.alfabeta_moves = 0
         
@@ -51,7 +51,12 @@ class Environment:
         # result = False
         # while not result:
         #     result = self.handle_input_mov()
-        self.mrx = alfabeta.choose_new_move_mrx()
+        new_mrx_position = alfabeta.choose_new_move_mrx()
+
+        if new_mrx_position == -1:
+            return True
+        self.mrx = new_mrx_position
+        return False
 
     def handle_input_mov(self):
         print("Choose new Mr.X position")
@@ -111,28 +116,28 @@ class Environment:
 # UP
 def go_up(position):
     if (position - 5) < 0:
-        return False
+        return -1
     return position - 5
 
 # DOWN
 def go_down(position):
     if (position + 5) > 24:
-        return False
+        return -1
     return position + 5
 
 # LEFT
 def go_left(position):
     if (position % 5) == 0:
-        return False
+        return -1
     return position - 1
 
 # RIGHT
 def go_right(position):
     if ((position + 1) % 5) == 0:
-        return False
+        return -1
     return position + 1
 
-# returns list of new positions or False if invalid move
+# returns list of new positions or -1 if invalid move
 def get_valid_moves(position):
     up = go_up(position)
     down = go_down(position)
@@ -141,14 +146,25 @@ def get_valid_moves(position):
 
     return [up, down, left, right]
 
+def get_valid_moves_mrx_vs_player(mrx):
+    valid_in_env = get_valid_moves(mrx)
+    valid_moves = []
+
+    for move in valid_in_env:
+        if move != -1:
+            valid_moves.append(move)
+
+    return valid_moves
+
 def get_valid_moves_mrx(mrx, a1, a2):
     valid_in_env = get_valid_moves(mrx)
+    valid_moves = []
 
-    for i in range(len(valid_in_env)):
-        if valid_in_env[i] == a1 or valid_in_env[i] == a2:
-            valid_in_env[i] = False
+    for move in valid_in_env:
+        if move != a1 and move != a2 and move != -1:
+            valid_moves.append(move)
 
-    return valid_in_env
+    return valid_moves
 
 def get_valid_moves_agents(position1, position2):
     agent1 = get_valid_moves(position1)
@@ -158,7 +174,7 @@ def get_valid_moves_agents(position1, position2):
 
     for i1 in agent1:
         for i2 in agent2:
-            if i1 != False and i2 != False and i1 != i2:
+            if i1 != -1 and i2 != -1 and i1 != i2:
                 possible_positions.append([i1, i2])
 
     return possible_positions
