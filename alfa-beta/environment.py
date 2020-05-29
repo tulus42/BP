@@ -5,6 +5,7 @@ import player_input
 class Environment:
     def __init__(self):
         self.mrx = 1
+        self.mrx_last_seen = -1
         self.agent1 = 3
         self.agent2 = 7
         self.epochs = 0
@@ -20,6 +21,8 @@ class Environment:
     def reset(self):
         positions = [x for x in range(25)]
 
+        self.mrx_last_seen = -1
+
         self.mrx = random.choice(positions)
         positions.remove(self.mrx)
         
@@ -33,33 +36,31 @@ class Environment:
         self.alfabeta_moves = 0
         
     def move_agents(self, alfabeta):
-        # print("----------------------")
-        # print(self.alfabeta_moves)
-        # print("----------------------")
-        
+        # every 3th move explore state space with new information about Mr.X
         if self.alfabeta_moves % 3 == 0:
-            print("Teraz ťa vidia")
             alfabeta.explore_state_space(self.agent1, self.agent2, self.mrx)
         
         self.agent1, self.agent2 = alfabeta.choose_new_move_agents()
     
         self.alfabeta_moves = (self.alfabeta_moves + 1) % 3
 
-        # make imaginary step for mrX - agents do not know real position
-        alfabeta.choose_new_move_mrx()                                          # only in vs player
-
-        # make imaginary step for mrX - agents do not know real position
-        # if self.alfabeta_moves % 3 != 0:
-        #     alfabeta.choose_new_move_mrx()
+    
 
     def move_mrx(self, alfabeta):
-        # new_mrx_position = alfabeta.choose_new_move_mrx()   # only AI vs itself
-        new_mrx_position = player_input.handle_input(self.mrx, self.agent1, self.agent2)        # AI vs player
+        new_mrx_position = alfabeta.move_mrx(self.agent1, self.agent2, self.mrx)   # AI vs AI
+        # new_mrx_position = player_input.handle_input(self.mrx, self.agent1, self.agent2)        # AI vs player
 
         if new_mrx_position == -1:
-            return True
+            return False
         self.mrx = new_mrx_position
-        return False
+
+        if self.alfabeta_moves % 3 == 0:
+            self.mrx_last_seen = self.mrx
+
+        return True
+
+
+        
 
 
 
@@ -75,9 +76,12 @@ class Environment:
 
         out_map = [[' '] * cols for i in range(rows)]
 
+        if self.mrx_last_seen != -1:
+            out_map[self.mrx_last_seen // rows][self.mrx_last_seen % cols] = "-"
+        out_map[self.mrx // rows][self.mrx % cols] = "X"
         out_map[self.agent1 // rows][self.agent1 % cols] = "1"
         out_map[self.agent2 // rows][self.agent2 % cols] = "2"
-        out_map[self.mrx // rows][self.mrx % cols] = "X"
+        
 
         out = ""
         print("+---------+")
@@ -130,6 +134,7 @@ def get_valid_moves(position):
 
     return [up, down, left, right]
 
+# returns valid moves according to environment - not according to agents
 def get_valid_moves_mrx_vs_player(mrx):
     valid_in_env = get_valid_moves(mrx)
     valid_moves = []
@@ -140,6 +145,7 @@ def get_valid_moves_mrx_vs_player(mrx):
 
     return valid_moves
 
+# returns valid moves according to environment and to agents
 def get_valid_moves_mrx(mrx, a1, a2):
     valid_in_env = get_valid_moves(mrx)
     valid_moves = []

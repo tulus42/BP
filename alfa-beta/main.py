@@ -1,31 +1,36 @@
 import environment
 import alfa_beta
-
+import alfa_beta_mrx
+import time
 
 env = environment.Environment()
 ab = alfa_beta.AlfaBeta()
+abx = alfa_beta_mrx.AlfaBeta()
 
-# while not env.finished() and env.epochs < 20:
-#     print("Epoch:", env.epochs)
-#     env.move_agents(ab)
+######################################
+# set sleep time after every move    #
+sleep_time = 0.5        # in seconds #
 
-#     env.epochs += 1
-env.render()
 
-for x in range(10):
-
+for x in range(15):
     if env.mrx == env.agent1 or env.mrx == env.agent2:
-        env.render()
-        print("WIN", x)
+        print("WIN in move", x)
         break
 
-    
-    if env.move_mrx(ab) == True:
-        env.render()
-        print("WIN", x)
+    time.sleep(sleep_time)
+    print("Move:", x)
+    env.render()
+
+    # False = no possible move, True = mrx moved
+    if env.move_mrx(abx) == False:
+        print("WIN in move", x)
         break
+    
+    time.sleep(sleep_time)
+    print("Move:", x)
+    env.render()
 
     env.move_agents(ab)
 
-    print("Ťah:", x)
-    env.render()
+
+env.render()
